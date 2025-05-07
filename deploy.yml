@@ -111,7 +111,7 @@
       command: update-rc.d tomcat9 defaults
 
     - name: Start Tomcat service
-      command: service tomcat9 start
+      command: service tomcat9 restart
     - name: Create standard Tomcat log directory
       file:
         path: /var/log/tomcat9

@@ -13,12 +13,12 @@ if [ $# -ne 1 ]; then
     usage
 fi
 
-docker build -t tomcat-deploy:v1 -f Dockerfile .
+docker build -t tomcat-deploy:v2 -f Dockerfile .
 
 docker run --rm -it \
   --privileged=true \
   -v "$(pwd)":/data \
-  tomcat-deploy:v1 \
+  tomcat-deploy:v2 \
   bash -c "/data/tomcat_test.sh ${ENVIRONMENT}"
 
 
