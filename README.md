@@ -13,7 +13,9 @@
 ./tomcat_deploy.sh DEV
 //or
 ./tomcat_deploy.sh PROD
-### Structure du Projet
+```
+
+### Project structure
 
 .
 ├── deploy.yml  
@@ -38,8 +40,5 @@ This playbook performs the following steps:
 
 **`tomcat_deploy.sh`** :  
 This bash script is used to run the deployment process inside a Docker container. It accepts an argument (DEV or PROD) to define the execution environment. The script builds the Docker image from the Dockerfile and launches a container with a volume attached, mapping the current directory ($(pwd)) to /data inside the container. The container then runs the tomcat_test.sh file to perform deployment tests.
-
-
-
 
 
