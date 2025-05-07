@@ -1,0 +1,142 @@
+- name: Install Apache Tomcat manually and deploy WAR
+  hosts: localhost
+  become: yes
+  tasks:
+    - name: Install required packages
+      apt:
+        name:
+          - default-jdk
+          - curl
+          - sysvinit-utils  # Required for service command
+        update_cache: yes
+    
+    - name: Create Tomcat install directory
+      file:
+        path: /opt/tomcat
+        state: directory
+        mode: '0755'
+    
+    - name: Download Tomcat 9
+      get_url:
+        url: https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.104/bin/apache-tomcat-9.0.104.tar.gz 
+        dest: /tmp
+    
+    - name: Extract Tomcat
+      unarchive:
+        src: /tmp/apache-tomcat-9.0.104.tar.gz 
+        dest: /opt/tomcat/
+        remote_src: yes
+    
+    - name: Create symlink to latest Tomcat
+      file:
+        src: /opt/tomcat/apache-tomcat-9.0.104
+        dest: /opt/tomcat/latest
+        state: link
+    
+    - name: Make scripts executable
+      file:
+        path: "/opt/tomcat/latest/bin/{{ item }}"
+        mode: '0755'
+      loop:
+        - startup.sh
+        - shutdown.sh
+        - catalina.sh
+    
+    - name: Create tomcat user
+      user:
+        name: tomcat
+        shell: /bin/false
+        home: /opt/tomcat
+        system: yes
+    
+    - name: Change ownership of Tomcat installation
+      file:
+        path: /opt/tomcat
+        owner: tomcat
+        group: tomcat
+        recurse: yes
+    
+    - name: Copy WAR file to Tomcat webapps
+      copy:
+        src: /data/sample.war
+        dest: /opt/tomcat/latest/webapps/sample.war
+        owner: tomcat
+        group: tomcat
+
+    # New tasks for init script
+    - name: Create tomcat9 init script
+      copy:
+        dest: /etc/init.d/tomcat9
+        content: |
+          #!/bin/sh
+          ### BEGIN INIT INFO
+          # Provides:          tomcat9
+          # Required-Start:    $remote_fs $syslog
+          # Required-Stop:     $remote_fs $syslog
+          # Default-Start:     2 3 4 5
+          # Default-Stop:      0 1 6
+          # Short-Description: Apache Tomcat 9
+          ### END INIT INFO
+
+          case "$1" in
+              start)
+                  /opt/tomcat/latest/bin/startup.sh
+                  ;;
+              stop)
+                  /opt/tomcat/latest/bin/shutdown.sh
+                  ;;
+              status)
+                  if ps -ef | grep -q "[j]ava.*tomcat"; then
+                      echo "Tomcat is running"
+                      exit 0
+                  else
+                      echo "Tomcat is not running"
+                      exit 3
+                  fi
+                  ;;
+              restart)
+                  $0 stop
+                  sleep 5
+                  $0 start
+                  ;;
+              *)
+                  echo "Usage: $0 {start|stop|status|restart}"
+                  exit 1
+                  ;;
+          esac
+          exit 0
+        mode: '0755'
+
+    - name: Update rc.d links for tomcat9
+      command: update-rc.d tomcat9 defaults
+
+    - name: Start Tomcat service
+      command: service tomcat9 start
+    - name: Create standard Tomcat log directory
+      file:
+        path: /var/log/tomcat9
+        state: directory
+        owner: tomcat
+        group: tomcat
+        mode: '0755'
+
+    - name: Configure logging in setenv.sh
+      copy:
+        dest: /opt/tomcat/latest/bin/setenv.sh
+        content: |
+          #!/bin/sh
+          CATALINA_OUT="/var/log/tomcat9/catalina.out"
+          export CATALINA_OUT
+        mode: '0755'
+        owner: tomcat
+        group: tomcat
+
+    - name: Ensure catalina.out exists
+      file:
+        path: /var/log/tomcat9/catalina.out
+        state: touch
+        owner: tomcat
+        group: tomcat
+        mode: '0644'
+
+
