@@ -19,9 +19,13 @@
 
 .
 ├── deploy.yml  
+
 ├── Dockerfile  
+
 ├── sample.war
+
 ├── tomcat_deploy.sh
+
 └── tomcat_test.sh
 
 
