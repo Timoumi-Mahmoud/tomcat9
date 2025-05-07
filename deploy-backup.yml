@@ -1,6 +1,9 @@
 - name: Install Apache Tomcat manually and deploy WAR
   hosts: localhost
   become: yes
+  vars:
+    env: "DEV"  
+
   tasks:
     - name: Install required packages
       apt:
@@ -63,7 +66,6 @@
         owner: tomcat
         group: tomcat
 
-    # New tasks for init script
     - name: Create tomcat9 init script
       copy:
         dest: /etc/init.d/tomcat9
@@ -118,13 +120,21 @@
         group: tomcat
         mode: '0755'
 
-    - name: Configure logging in setenv.sh
+
+    - name: Set JVM heap size based on environment  in setenv.sh
       copy:
         dest: /opt/tomcat/latest/bin/setenv.sh
         content: |
           #!/bin/sh
           CATALINA_OUT="/var/log/tomcat9/catalina.out"
           export CATALINA_OUT
+          
+          # Set JVM heap size based on environment
+          {% if env == 'DEV' %}
+          export CATALINA_OPTS="-Xmx256m"
+          {% elif env == 'PROD' %}
+          export CATALINA_OPTS="-Xmx512m"
+          {% endif %}
         mode: '0755'
         owner: tomcat
         group: tomcat
@@ -138,5 +148,9 @@
         mode: '0644'
 
     - name: Start Tomcat service
-      command: service tomcat9 restart
- 
+      command: service tomcat9 start
+    - name: Wait for Tomcat to open port 8080
+      wait_for:
+        port: 8080
+        delay: 3    # wait 3 seconds before checking
+        timeout: 30 # wait up to 30 seconds
