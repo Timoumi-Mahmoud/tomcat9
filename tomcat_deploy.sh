@@ -13,12 +13,12 @@ if [ $# -ne 1 ] || ! [[ "$ENVIRONMENT" =~ ^(DEV|PROD)$ ]]; then
     usage
 fi
 
-docker build -t tomcat-deploy:v3 -f Dockerfile .
+docker build -t tomcat-deploy:v1 -f Dockerfile .
 
 docker run --rm -it \
   --privileged=true \
   -v "$(pwd)":/data \
-  tomcat-deploy:v3 \
+  tomcat-deploy:v1 \
   bash -c "/data/tomcat_test.sh ${ENVIRONMENT}"
 
 
