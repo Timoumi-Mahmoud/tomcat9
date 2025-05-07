@@ -129,7 +129,6 @@
           CATALINA_OUT="/var/log/tomcat9/catalina.out"
           export CATALINA_OUT
           
-          # Set JVM heap size based on environment
           {% if env == 'DEV' %}
           export CATALINA_OPTS="-Xmx256m"
           {% elif env == 'PROD' %}
@@ -152,5 +151,5 @@
     - name: Wait for Tomcat to open port 8080
       wait_for:
         port: 8080
-        delay: 3    # wait 3 seconds before checking
-        timeout: 30 # wait up to 30 seconds
+        delay: 3    
+        timeout: 30 
